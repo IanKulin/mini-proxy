@@ -1,0 +1,7 @@
+services:
+  mini-proxy:
+    image: mini-proxy
+    ports:
+      - "8080:8080"
+    environment:
+      - TARGET_HEALTH_URL=https://api.ato.gov.au/healthcheck/v1/
