@@ -30,20 +30,19 @@ func parseLogLevel(level string) slog.Level {
 }
 
 
+// look in the request headers for a proxy IP
 func getProxyIP(r *http.Request) string {
     xff := r.Header.Get("X-Forwarded-For")
     if xff != "" {
-        ips := strings.Split(xff, ",")
-        if len(ips) > 0 {
-            return ips[0]
+        for ip := range strings.SplitSeq(xff, ",") {
+            return ip
         }
     }
 
     // Check Forwarded header (RFC 7239) as fallback
     if forwarded := r.Header.Get("Forwarded"); forwarded != "" {
         // Forwarded format: "for=client;by=proxy"
-        parts := strings.Split(forwarded, ";")
-        for _, part := range parts {
+        for part := range strings.SplitSeq(forwarded, ";") {
             part = strings.TrimSpace(part)
             if strings.HasPrefix(part, "for=") {
                 forValue := strings.TrimPrefix(part, "for=")
