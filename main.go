@@ -13,6 +13,7 @@ import (
 )
 
 const Version = "0.1.0"
+const DefaultHttpGetTimeout = 10 * time.Second
 
 // helper to convert environment string to slog.Level
 func parseLogLevel(level string) slog.Level {
@@ -145,7 +146,10 @@ func main() {
             mu.Unlock()
         }
 
-        resp, err := http.Get(targetURL)
+        client := &http.Client{
+            Timeout: DefaultHttpGetTimeout,
+        }
+        resp, err := client.Get(targetURL)
         if err != nil {
             http.Error(w, "Proxy failed", http.StatusServiceUnavailable)
             return
