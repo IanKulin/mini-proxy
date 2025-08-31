@@ -28,7 +28,7 @@ mini-proxy includes simple rate limiting to prevent abuse. By default, it allows
 ```yaml
 services:
   mini-proxy:
-    image: mini-proxy
+    image: ghcr.io/iankulin/mini-proxy
     ports:
       - "8080:8080"
     environment:
