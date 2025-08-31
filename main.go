@@ -13,12 +13,12 @@ import (
 )
 
 
-// helper to convert env string to slog.Level
+// helper to convert environment string to slog.Level
 func parseLogLevel(level string) slog.Level {
 	switch strings.ToLower(level) {
 	case "debug":
 		return slog.LevelDebug
-	case "info":
+	case "info", "information":
 		return slog.LevelInfo
 	case "warn", "warning":
 		return slog.LevelWarn
@@ -39,9 +39,9 @@ func getProxyIP(r *http.Request) string {
         }
     }
 
-    // Check Forwarded header (RFC 7239) as fallback
+    // check Forwarded header (RFC 7239) as fallback
     if forwarded := r.Header.Get("Forwarded"); forwarded != "" {
-        // Forwarded format: "for=client;by=proxy"
+        // forwarded format: "for=client;by=proxy"
         for part := range strings.SplitSeq(forwarded, ";") {
             part = strings.TrimSpace(part)
             if strings.HasPrefix(part, "for=") {
@@ -67,40 +67,37 @@ func getProxyIP(r *http.Request) string {
 }
 
 
-func rateLimitThis(r *http.Request, whitelistIP string, onlyTrustedProxy string, logger *slog.Logger) bool {
+func rateLimitThis(r *http.Request, whitelistIP string, trustedProxy string, logger *slog.Logger) bool {
     clientIP := r.RemoteAddr
     proxyIP := getProxyIP(r)
     if logger != nil {
-        logger.Debug("Rate limit check", "clientIP", clientIP, "proxyIP", proxyIP, "whitelistIP", whitelistIP, "onlyTrustedProxy", onlyTrustedProxy)
+        logger.Debug("Rate limit check", "clientIP", clientIP, "proxyIP", proxyIP, "whitelistIP", whitelistIP, "trustedProxy", trustedProxy)
     }
     
     if whitelistIP == "" {
-        // if there's no whitelisted ip, rate limit everything
+        // there's no whitelisted ip, rate limit everything
         return true
     }
 
-    if onlyTrustedProxy != "" {
-        // if there's a trusted proxy defined, only trust that proxy
-        if clientIP == onlyTrustedProxy {
-            // request is from trusted proxy, check if whitelist IP is in headers
-            return !(proxyIP == whitelistIP)
-        } else {
-            // request is not from trusted proxy, rate limit
-            return true
-        }
-    } else {
-        // if there's no trusted proxy defined, we trust all proxies
-        // check both RemoteAddr and headers for whitelist IP
-        return !((clientIP == whitelistIP) || (proxyIP == whitelistIP))
-    }   
+    if clientIP == whitelistIP {
+        // request is directly from whitelisted IP, no rate limit
+        return false
+    }
+
+    if (clientIP == trustedProxy) && (trustedProxy != "") {
+        // request is from the trusted proxy, don't rate limit if whitelist IP is in headers
+        return !(proxyIP == whitelistIP)
+    }
+
+    // there's no trusted proxy, or this request is not from it
+    return true  
 }
 
 
 func main() {
+    // set up logger
 	logLevel := os.Getenv("LOG_LEVEL")
 	level := parseLogLevel(logLevel)
-
-	// Create handler with level filter
 	opts := &slog.HandlerOptions{Level: level}
 	logger := slog.New(slog.NewTextHandler(os.Stdout, opts))
 
@@ -126,7 +123,7 @@ func main() {
     }
     
     whitelistIP := os.Getenv("RATE_LIMIT_WHITELIST_IP")
-    onlyTrustProxyIP := os.Getenv("ONLY_TRUST_PROXY_IP")
+    trustedProxyIP := os.Getenv("TRUSTED_PROXY_IP")
 
     var (
         lastRequest time.Time
@@ -135,7 +132,7 @@ func main() {
 
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         
-        if rateLimitThis(r, whitelistIP, onlyTrustProxyIP, logger) {
+        if rateLimitThis(r, whitelistIP, trustedProxyIP, logger) {
             mu.Lock()
             now := time.Now()
             if !lastRequest.IsZero() && now.Sub(lastRequest) < time.Duration(rateLimitDuration)*time.Millisecond {
@@ -164,8 +161,8 @@ func main() {
     if whitelistIP != "" {
         logger.Info("whitelist configured", "ip", whitelistIP)
     }
-    if onlyTrustProxyIP != "" {
-        logger.Info("trusted proxy configured", "ip", onlyTrustProxyIP)
+    if trustedProxyIP != "" {
+        logger.Info("trusted proxy configured", "ip", trustedProxyIP)
     }
     err = http.ListenAndServe(":"+port, nil)
     if err != nil {

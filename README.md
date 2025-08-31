@@ -17,11 +17,11 @@ mini-proxy uses environment variables for configuration:
 
 ## Rate Limiting
 
-mini-proxy includes simple rate limiting to prevent abuse. By default, it allows one request per 1000ms. You can configure this with:
+**mini-proxy** includes simple rate limiting to prevent abuse. By default, it allows one request per 1000ms. You can configure this with:
 
 - `RATE_LIMIT_MS`: Set to a different value (e.g., 500 for 500ms between requests)
 - `RATE_LIMIT_WHITELIST_IP`: Set to a specific IP address to bypass rate limiting for that IP
-- `ONLY_TRUST_PROXY_IP`: If the whitelist IP (above) is in the any of the headers, rate limiting is skipped, defining a trusted proxy means it will only be skipped if this proxy is detected AND the whitelisted IP is in the headers
+- `TRUSTED_PROXY_IP`: If the request is from the trusted proxy IP, then the forwarded headers will be checked for the whitelist IP to skip rate limiting
 
 ## Example Usage
 
@@ -35,4 +35,4 @@ services:
       - TARGET_HEALTH_URL=https://api.example.com/health
       - RATE_LIMIT_MS=500
       - RATE_LIMIT_WHITELIST_IP=192.168.1.100
-      - ONLY_ONLY_TRUST_PROXY_IP=127.0.0.1
+      - TRUSTED_PROXY_IP=127.0.0.1
