@@ -1,6 +1,6 @@
 services:
   mini-proxy:
-    image: mini-proxy
+    image: ghcr.io/iankulin/mini-proxy
     ports:
       - "8080:8080"
     environment:

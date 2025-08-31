@@ -11,7 +11,11 @@ build:
 
 .PHONY: docker-build
 docker-build:
-	docker build -t mini-proxy .
+	docker build -t ghcr.io/iankulin/mini-proxy .
+
+.PHONY: docker-push
+docker-push: docker-build
+	docker push ghcr.io/iankulin/mini-proxy
 
 .PHONY: test
 test:
