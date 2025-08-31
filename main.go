@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+const Version = "0.1.0"
 
 // helper to convert environment string to slog.Level
 func parseLogLevel(level string) slog.Level {
