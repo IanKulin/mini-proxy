@@ -99,12 +99,12 @@ func TestRateLimitThis(t *testing.T) {
 			expected:         true,
 		},
 		{
-			name:             "Untrusted proxy mode - whitelisted IP in headers - no rate limit",
+			name:             "Untrusted proxy mode - whitelisted IP in headers - rate limit (headers ignored)",
 			remoteAddr:       "10.0.0.1",
 			headers:          map[string]string{"X-Forwarded-For": "192.168.1.100"},
 			whitelistIP:      "192.168.1.100",
 			onlyTrustedProxy: "",
-			expected:         false,
+			expected:         true,
 		},
 		{
 			name:             "Untrusted proxy mode - non-whitelisted IP in headers - rate limit",
@@ -139,11 +139,11 @@ func TestRateLimitThis(t *testing.T) {
 			expected:         true,
 		},
 		{
-			name:             "Trusted proxy mode - direct request from whitelisted IP to trusted proxy - rate limit",
+			name:             "Trusted proxy mode - direct request from whitelisted IP bypassing trusted proxy - no rate limit",
 			remoteAddr:       "192.168.1.100",
 			whitelistIP:      "192.168.1.100",
 			onlyTrustedProxy: "10.0.0.1",
-			expected:         true,
+			expected:         false,
 		},
 	}
 
