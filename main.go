@@ -126,6 +126,16 @@ func main() {
     
     whitelistIP := os.Getenv("RATE_LIMIT_WHITELIST_IP")
     trustedProxyIP := os.Getenv("TRUSTED_PROXY_IP")
+    
+    maxResponseSizeStr := os.Getenv("MAX_RESPONSE_SIZE")
+    maxResponseSize := int64(100 * 1024) // Default: 100KB
+    if maxResponseSizeStr != "" {
+        if parsedSizeKB, err := strconv.ParseInt(maxResponseSizeStr, 10, 64); err == nil {
+            maxResponseSize = parsedSizeKB * 1024 // Convert KB to bytes
+        } else {
+            logger.Warn("Invalid MAX_RESPONSE_SIZE value, using default 100KB")
+        }
+    }
 
     var (
         lastRequest time.Time
@@ -156,13 +166,37 @@ func main() {
         }
         defer resp.Body.Close()
         
+        // check Content-Length header if present
+        if contentLength := resp.Header.Get("Content-Length"); contentLength != "" {
+            if length, err := strconv.ParseInt(contentLength, 10, 64); err == nil && length > maxResponseSize {
+                logger.Debug("Response too large", "content-length", length, "max", maxResponseSize)
+                http.Error(w, "Response too large", http.StatusRequestEntityTooLarge)
+                return
+            }
+        }
+        
         w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
         w.WriteHeader(resp.StatusCode)
-        io.Copy(w, resp.Body)
+        
+        // limit response size (in case there was no content-length header)
+        limitedBody := io.LimitReader(resp.Body, maxResponseSize+1)
+        copied, err := io.Copy(w, limitedBody)
+        if err != nil {
+            logger.Error("Error copying response", "error", err)
+            return
+        }
+        
+        if copied > maxResponseSize {
+            logger.Error("Response exceeded size limit", "copied", copied, "max", maxResponseSize)
+            // at this point some data has already been sent to client
+        } else {
+            logger.Debug("Response copied successfully", "size", copied)
+        }
     })
 
     logger.Info("mini-proxy starting", "port", port, "target", targetURL)
     logger.Info("rate limit configured", "duration_ms", rateLimitDuration)
+    logger.Info("max response size configured", "kb", maxResponseSize/1024)
     if whitelistIP != "" {
         logger.Info("whitelist configured", "ip", whitelistIP)
     }

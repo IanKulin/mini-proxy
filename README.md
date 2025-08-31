@@ -14,6 +14,7 @@ mini-proxy uses environment variables for configuration:
 - `RATE_LIMIT_MS`: Minimum milliseconds between requests (default: 1000ms)
 - `RATE_LIMIT_WHITELIST_IP`: IP address to bypass rate limiting (optional)
 - `TRUSTED_PROXY_IP`: IP Address of proxy (optional)
+- `MAX_RESPONSE_SIZE`: Maximum allowed request response size in KB (optional, defaults to 100)
 
 ## Rate Limiting
 
@@ -22,6 +23,7 @@ mini-proxy uses environment variables for configuration:
 - `RATE_LIMIT_MS`: Set to a different value (e.g., 500 for 500ms between requests)
 - `RATE_LIMIT_WHITELIST_IP`: Set to a specific IP address to bypass rate limiting for that IP
 - `TRUSTED_PROXY_IP`: If the request is from the trusted proxy IP, then the forwarded headers will be checked for the whitelist IP to skip rate limiting
+
 
 ## Example Usage
 
