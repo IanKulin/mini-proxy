@@ -13,7 +13,7 @@ mini-proxy uses environment variables for configuration:
 - `PORT`: The port to listen on (default: 8080)
 - `RATE_LIMIT_MS`: Minimum milliseconds between requests (default: 1000ms)
 - `RATE_LIMIT_WHITELIST_IP`: IP address to bypass rate limiting (optional)
-- `ONLY_TRUST_PROXY_IP`: IP Address of proxy
+- `TRUSTED_PROXY_IP`: IP Address of proxy (optional)
 
 ## Rate Limiting
 
