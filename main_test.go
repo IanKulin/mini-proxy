@@ -156,7 +156,7 @@ func TestRateLimitThis(t *testing.T) {
 				req.Header.Set(key, value)
 			}
 
-			result := rateLimitThis(req, tt.whitelistIP, tt.onlyTrustedProxy)
+			result := rateLimitThis(req, tt.whitelistIP, tt.onlyTrustedProxy, nil)
 			if result != tt.expected {
 				t.Errorf("rateLimitThis() = %v, want %v", result, tt.expected)
 			}

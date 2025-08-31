@@ -2,7 +2,7 @@ package main
 
 import (
 	"io"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -11,7 +11,24 @@ import (
 	"sync"
 	"time"
 )
- 
+
+
+// helper to convert env string to slog.Level
+func parseLogLevel(level string) slog.Level {
+	switch strings.ToLower(level) {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn", "warning":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
+}
+
 
 func getProxyIP(r *http.Request) string {
     xff := r.Header.Get("X-Forwarded-For")
@@ -51,10 +68,13 @@ func getProxyIP(r *http.Request) string {
 }
 
 
-func rateLimitThis(r *http.Request, whitelistIP string, onlyTrustedProxy string) bool {
+func rateLimitThis(r *http.Request, whitelistIP string, onlyTrustedProxy string, logger *slog.Logger) bool {
     clientIP := r.RemoteAddr
     proxyIP := getProxyIP(r)
-
+    if logger != nil {
+        logger.Debug("Rate limit check", "clientIP", clientIP, "proxyIP", proxyIP, "whitelistIP", whitelistIP, "onlyTrustedProxy", onlyTrustedProxy)
+    }
+    
     if whitelistIP == "" {
         // if there's no whitelisted ip, rate limit everything
         return true
@@ -78,6 +98,13 @@ func rateLimitThis(r *http.Request, whitelistIP string, onlyTrustedProxy string)
 
 
 func main() {
+	logLevel := os.Getenv("LOG_LEVEL")
+	level := parseLogLevel(logLevel)
+
+	// Create handler with level filter
+	opts := &slog.HandlerOptions{Level: level}
+	logger := slog.New(slog.NewTextHandler(os.Stdout, opts))
+
     targetURL := os.Getenv("TARGET_HEALTH_URL")
     if targetURL == "" {
         targetURL = "http://your-app:8080/health" // default
@@ -95,7 +122,7 @@ func main() {
     
     rateLimitDuration, err := strconv.Atoi(rateLimitMs)
     if err != nil {
-        log.Printf("Invalid RATE_LIMIT_MS value, using default 1000ms")
+        logger.Warn("Invalid RATE_LIMIT_MS value, using default 1000ms")
         rateLimitDuration = 1000
     }
     
@@ -109,7 +136,7 @@ func main() {
 
     http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         
-        if rateLimitThis(r, whitelistIP, onlyTrustProxyIP) {
+        if rateLimitThis(r, whitelistIP, onlyTrustProxyIP, logger) {
             mu.Lock()
             now := time.Now()
             if !lastRequest.IsZero() && now.Sub(lastRequest) < time.Duration(rateLimitDuration)*time.Millisecond {
@@ -133,13 +160,17 @@ func main() {
         io.Copy(w, resp.Body)
     })
 
-    log.Printf("mini-proxy listening on :%s, proxying to %s", port, targetURL)
-    log.Printf("Rate limit: %dms between requests", rateLimitDuration)
+    logger.Info("mini-proxy starting", "port", port, "target", targetURL)
+    logger.Info("rate limit configured", "duration_ms", rateLimitDuration)
     if whitelistIP != "" {
-        log.Printf("Whitelist IP: %s", whitelistIP)
+        logger.Info("whitelist configured", "ip", whitelistIP)
     }
     if onlyTrustProxyIP != "" {
-        log.Printf("Trusted proxy: %s", onlyTrustProxyIP)
+        logger.Info("trusted proxy configured", "ip", onlyTrustProxyIP)
     }
-    log.Fatal(http.ListenAndServe(":"+port, nil))
+    err = http.ListenAndServe(":"+port, nil)
+    if err != nil {
+        logger.Error("server failed to start", "error", err)
+        os.Exit(1)
+    }
 }

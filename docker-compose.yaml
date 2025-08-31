@@ -7,4 +7,5 @@ services:
       - TARGET_HEALTH_URL=https://api.ato.gov.au/healthcheck/v1/
       - RATE_LIMIT_MS=1000
       - RATE_LIMIT_WHITELIST_IP=127.0.0.1
+      - LOG_LEVEL=info
       # - ONLY_TRUST_PROXY_IP=
