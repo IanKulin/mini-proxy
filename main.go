@@ -103,7 +103,7 @@ func main() {
 	opts := &slog.HandlerOptions{Level: level}
 	logger := slog.New(slog.NewTextHandler(os.Stdout, opts))
 
-    targetURL := os.Getenv("TARGET_HEALTH_URL")
+    targetURL := os.Getenv("TARGET_URL")
     if targetURL == "" {
         targetURL = "http://your-app:8080/health" // default
     }

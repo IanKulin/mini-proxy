@@ -5,7 +5,7 @@ VERSION := $(shell grep '^const Version' main.go | sed 's/.*"\(.*\)"/\1/')
 
 .PHONY: run
 run:
-	TARGET_HEALTH_URL=https://api.ato.gov.au/healthcheck/v1/ \
+	TARGET_URL=https://api.ato.gov.au/healthcheck/v1/ \
 	RATE_LIMIT_WHITELIST_IP=127.0.0.1 \
 	LOG_LEVEL=debug \
 	go run main.go
