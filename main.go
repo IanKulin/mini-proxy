@@ -127,13 +127,13 @@ func main() {
     whitelistIP := os.Getenv("RATE_LIMIT_WHITELIST_IP")
     trustedProxyIP := os.Getenv("TRUSTED_PROXY_IP")
     
-    maxResponseSizeStr := os.Getenv("MAX_RESPONSE_SIZE")
+    maxResponseSizeStr := os.Getenv("MAX_RESPONSE_SIZE_KB")
     maxResponseSize := int64(100 * 1024) // Default: 100KB
     if maxResponseSizeStr != "" {
         if parsedSizeKB, err := strconv.ParseInt(maxResponseSizeStr, 10, 64); err == nil {
             maxResponseSize = parsedSizeKB * 1024 // Convert KB to bytes
         } else {
-            logger.Warn("Invalid MAX_RESPONSE_SIZE value, using default 100KB")
+            logger.Warn("Invalid MAX_RESPONSE_SIZE_KB value, using default 100KB")
         }
     }
 

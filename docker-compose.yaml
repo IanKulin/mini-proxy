@@ -8,5 +8,5 @@ services:
       - RATE_LIMIT_MS=1000
       - RATE_LIMIT_WHITELIST_IP=127.0.0.1
       # - LOG_LEVEL=info
-      # - MAX_RESPONSE_SIZE=100
+      # - MAX_RESPONSE_SIZE_KB=100
       # - TRUSTED_PROXY_IP=
