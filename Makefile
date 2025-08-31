@@ -12,3 +12,7 @@ build:
 .PHONY: docker-build
 docker-build:
 	docker build -t mini-proxy .
+
+.PHONY: test
+test:
+	go test -v ./...
