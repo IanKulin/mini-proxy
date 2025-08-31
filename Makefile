@@ -1,8 +1,8 @@
 # Makefile
 
+# extract version from main.go
 VERSION := $(shell grep '^const Version' main.go | sed 's/.*"\(.*\)"/\1/')
 
-# Default target if you just type `make`
 .PHONY: run
 run:
 	TARGET_HEALTH_URL=https://api.ato.gov.au/healthcheck/v1/ \
