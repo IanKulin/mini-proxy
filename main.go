@@ -154,8 +154,8 @@ func main() {
         }
         defer resp.Body.Close()
         
-        w.WriteHeader(resp.StatusCode)
         w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
+        w.WriteHeader(resp.StatusCode)
         io.Copy(w, resp.Body)
     })
 
