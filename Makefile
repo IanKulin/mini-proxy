@@ -16,7 +16,9 @@ build:
 
 .PHONY: docker-build
 docker-build:
-	docker build -t ghcr.io/iankulin/mini-proxy:latest -t ghcr.io/iankulin/mini-proxy:$(VERSION) .
+	docker build --platform linux/amd64 \
+		-t ghcr.io/iankulin/mini-proxy:latest \
+		-t ghcr.io/iankulin/mini-proxy:$(VERSION) .
 
 .PHONY: docker-push
 docker-push: docker-build
